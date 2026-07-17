@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { getFullUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { formatCurrency, formatDate, orderStatusStyle } from "@/lib/utils";
+import {
+  formatCurrency,
+  orderStatusLabel,
+  orderStatusStyle,
+} from "@/lib/utils";
+import { Search } from "lucide-react";
 import { OrderStatus } from "@prisma/client";
 
 const ORDER_STATUSES: OrderStatus[] = [
@@ -25,92 +30,124 @@ export default async function DistributorOrders({
     ? (searchParams.status as OrderStatus)
     : undefined;
 
-  const orders = await prisma.order.findMany({
-    where: {
-      distributorId: dist.id,
-      ...(status ? { status } : {}),
-    },
-    include: { retailer: true, items: true },
-    orderBy: { createdAt: "desc" },
+  const [orders, delivered, pending, rejected, totalAll] = await Promise.all([
+    prisma.order.findMany({
+      where: {
+        distributorId: dist.id,
+        ...(status ? { status } : {}),
+      },
+      include: { retailer: true, items: true, ledger: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.order.count({
+      where: { distributorId: dist.id, status: "DELIVERED" },
+    }),
+    prisma.order.count({
+      where: { distributorId: dist.id, status: "PENDING" },
+    }),
+    prisma.order.count({
+      where: { distributorId: dist.id, status: "CANCELLED" },
+    }),
+    prisma.order.count({ where: { distributorId: dist.id } }),
+  ]);
+
+  const now = new Date();
+  const label = now.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
   });
 
-  const tabs = [
-    { key: "", label: "All" },
-    { key: "PENDING", label: "Pending" },
-    { key: "CONFIRMED", label: "Confirmed" },
-    { key: "DISPATCHED", label: "Dispatched" },
-    { key: "DELIVERED", label: "Delivered" },
-    { key: "CANCELLED", label: "Cancelled" },
-  ];
-
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Orders</h2>
-        <p className="text-slate-600 text-sm mt-1">
-          Confirm, dispatch, and deliver orders.
-        </p>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+        <ProgressCard
+          date={label}
+          title="Delivered"
+          count={delivered}
+          total={Math.max(totalAll, 1)}
+          color="bg-green-500"
+        />
+        <ProgressCard
+          date={label}
+          title="In Review"
+          count={pending}
+          total={Math.max(totalAll, 1)}
+          color="bg-yellow-400"
+        />
+        <ProgressCard
+          date={label}
+          title="Rejected"
+          count={rejected}
+          total={Math.max(totalAll, 1)}
+          color="bg-red-500"
+        />
       </div>
 
-      <div className="flex flex-wrap gap-1 border-b border-slate-200">
-        {tabs.map((t) => {
-          const active = (t.key === "" && !status) || t.key === status;
-          return (
-            <Link
-              key={t.key || "all"}
-              href={t.key ? `/distributor/orders?status=${t.key}` : "/distributor/orders"}
-              className={`px-3 py-2 text-sm font-medium border-b-2 ${
-                active
-                  ? "border-brand-600 text-brand-700"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              {t.label}
-            </Link>
-          );
-        })}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+        <div className="search-box flex-1 max-w-md">
+          <Search className="h-4 w-4 search-ico" />
+          <input placeholder="Search" />
+        </div>
+        <span
+          className="btn-primary opacity-60 cursor-not-allowed"
+          title="Counter selling coming soon"
+        >
+          New Order
+        </span>
       </div>
 
-      <div className="card overflow-hidden">
+      <div className="card">
+        <div className="p-5 flex items-center justify-between">
+          <h3 className="font-bold text-slate-900">My Orders</h3>
+          <button className="filter-pill">Filter</button>
+        </div>
         {orders.length === 0 ? (
-          <div className="p-10 text-center text-slate-500">
-            No orders in this view.
-          </div>
+          <div className="p-10 text-center text-slate-500">No orders yet.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-slate-500 bg-slate-50">
+            <table className="fg-table">
+              <thead>
                 <tr>
-                  <th className="px-5 py-3">Order</th>
-                  <th className="px-5 py-3">Retailer</th>
-                  <th className="px-5 py-3">Date</th>
-                  <th className="px-5 py-3">Items</th>
-                  <th className="px-5 py-3">Total</th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3"></th>
+                  <th>ID</th>
+                  <th>Retailer Name</th>
+                  <th>Items</th>
+                  <th>Status</th>
+                  <th></th>
+                  <th>Total</th>
+                  <th>Credits</th>
+                  <th className="text-right">...</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
-                {orders.map((o) => (
+              <tbody>
+                {orders.map((o, i) => (
                   <tr key={o.id}>
-                    <td className="px-5 py-3 font-medium">{o.code}</td>
-                    <td className="px-5 py-3">{o.retailer.shopName}</td>
-                    <td className="px-5 py-3">{formatDate(o.createdAt)}</td>
-                    <td className="px-5 py-3">{o.items.length}</td>
-                    <td className="px-5 py-3">
-                      {formatCurrency(o.totalAmount)}
+                    <td>{i + 1}.</td>
+                    <td className="font-medium text-slate-900">
+                      {o.retailer.shopName}
                     </td>
-                    <td className="px-5 py-3">
+                    <td>{o.items.length}</td>
+                    <td>
                       <span className={orderStatusStyle(o.status)}>
-                        {o.status}
+                        {orderStatusLabel(o.status)}
                       </span>
                     </td>
-                    <td className="px-5 py-3">
+                    <td>
                       <Link
                         href={`/distributor/orders/${o.id}`}
-                        className="text-brand-700 hover:underline text-sm"
+                        className="row-action"
                       >
-                        Manage
+                        edit
+                      </Link>
+                    </td>
+                    <td>{formatCurrency(o.totalAmount)}</td>
+                    <td>{formatCurrency(o.ledger?.balance ?? 0)}</td>
+                    <td className="text-right">
+                      <Link
+                        href={`/distributor/orders/${o.id}`}
+                        className="row-action"
+                      >
+                        view
                       </Link>
                     </td>
                   </tr>
@@ -119,6 +156,40 @@ export default async function DistributorOrders({
             </table>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function ProgressCard({
+  date,
+  title,
+  count,
+  total,
+  color,
+}: {
+  date: string;
+  title: string;
+  count: number;
+  total: number;
+  color: string;
+}) {
+  const pct = total > 0 ? Math.min(100, Math.round((count / total) * 100)) : 0;
+  return (
+    <div className="card p-6">
+      <p className="text-xs text-slate-400">{date}</p>
+      <p className="text-2xl font-bold text-slate-900 mt-2">{title}</p>
+      <div className="mt-6">
+        <div className="h-2 rounded-full bg-slate-200 overflow-hidden">
+          <div
+            className={`h-full rounded-full ${color}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-2 flex items-center justify-between text-sm">
+          <span className="text-slate-500">Progress</span>
+          <span className="font-semibold text-slate-800">{pct}%</span>
+        </div>
       </div>
     </div>
   );

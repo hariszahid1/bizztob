@@ -2,47 +2,45 @@
 
 A B2B SaaS platform that connects local retail shops with their distributors. Retailers place orders digitally, distributors manage orders, deliveries, and ledgers — all from one platform.
 
-Built as a single mobile-responsive Next.js web app so you can run it entirely on `localhost` (no mobile-app build required).
+Built as a single mobile-responsive Next.js web app so you can run it entirely on `localhost` (no separate mobile app build).
 
 ## Features (Phase 1 MVP)
 
 ### Retailer
 - Sign up / sign in
-- Browse distributor catalogs (search + filter)
-- Add to cart, place orders (single distributor per order)
-- Track order status timeline (Pending → Confirmed → Dispatched → Delivered)
-- View simple ledger (invoices, payments, running balance)
-- AI Assistant (rules-based demo, ready to plug in an LLM)
+- Browse the market (top-nav catalog with per-distributor product grids)
+- Cart with quantity inputs, delivery address, request-pending, and green "Request Order" button
+- Track order status (In Review → Accepted → Dispatched → Delivered / Rejected)
+- Dashboard, Orders (with metric cards), Order Details, Messages, Payment, Ledger
 
 ### Distributor
-- Dashboard with pending orders, today's orders, outstanding balances, top-selling products
-- Manage products (create/edit/delete, prices, stock, category, image)
-- Receive & confirm orders, schedule deliveries (address / driver / vehicle / date)
-- Advance orders through statuses; delivered orders auto-generate an invoice ledger entry
-- Deliveries page (scheduled/dispatched/delivered)
-- Retailer ledgers with running balance and payment recording
-- Retailers list (only those who have ordered)
+- Dashboard with total orders, revenue, retailer count, and Delivered / Pending / Rejected progress rings
+- Orders: progress cards + table with `edit` / `view` actions
+- Products: table view + split-view Add / Edit product (image on left, fields on right)
+- Inventory (companies + products), Connections (retailers), Team (member management stub)
+- Payment: total sale, paid, pending — plus pending/paid retailer tables
+- Ledger: wide table with Invoice Date, ID, Retailer, Total, Paid, **Balance Due**, Due Date, Payment 1/2
+- Settings
 
 ### Admin
-- Platform overview: totals for distributors, retailers, products, GMV
+- Platform overview: distributors, retailers, products, GMV
 - List of all distributors & retailers
-- Recent orders across the platform
 
 ## Tech Stack
 
 - **Framework:** Next.js 14 (App Router) + TypeScript
-- **UI:** Tailwind CSS + Lucide icons (mobile responsive)
-- **DB:** PostgreSQL 16 (via Prisma) with native enums
+- **UI:** Tailwind CSS + Poppins + Lucide icons (mobile responsive, brand blue→purple gradient)
+- **DB:** MongoDB 7 (via Prisma) — runs as a single-node replica set for transaction support
 - **Auth:** JWT httpOnly cookies (via `jose`), bcrypt hashing
 - **Validation:** Zod
 
 ## Getting Started (localhost)
 
-Requires Node.js 18.18+ and a running PostgreSQL instance.
+Requires Node.js 18.18+ and a running MongoDB replica set.
 
-### 1) Start PostgreSQL
+### 1) Start MongoDB
 
-Pick one of these three options:
+Pick **one** of these three options:
 
 **Option A — Docker (recommended, one command):**
 
@@ -50,33 +48,44 @@ Pick one of these three options:
 docker compose up -d
 ```
 
-This starts Postgres 16 on `localhost:5432` with database/user/password all set to `bizztob` — matching the default `DATABASE_URL` in `.env`.
-
-**Option B — Local Postgres (Ubuntu/Debian):**
+This starts MongoDB 7 on `localhost:27017` as a single-node replica set (`rs0`). The healthcheck auto-initiates the replica set on first launch. Wait ~15 seconds for the healthcheck to go green:
 
 ```bash
-sudo systemctl start postgresql
-sudo -u postgres psql -c "CREATE USER bizztob WITH PASSWORD 'bizztob';"
-sudo -u postgres psql -c "CREATE DATABASE bizztob OWNER bizztob;"
+docker compose ps
+# Wait until STATUS shows "healthy"
 ```
 
-**Option C — Bring your own Postgres:**
+**Option B — MongoDB Atlas (free cloud cluster):**
 
-Edit `.env` and set `DATABASE_URL` to your Postgres connection string:
+1. Create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com)
+2. Add your IP to the access list, create a DB user
+3. Copy the connection string and paste it into `.env`:
 
 ```
-DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DBNAME?schema=public"
+DATABASE_URL="mongodb+srv://<user>:<password>@<cluster>.mongodb.net/bizztob?retryWrites=true&w=majority"
 ```
 
-### 2) Install, migrate, seed, run
+**Option C — Local MongoDB install:**
+
+You need MongoDB 4.0+ running as a **replica set** (transactions require this):
 
 ```bash
-# Install dependencies
+# Start mongod with --replSet rs0
+mongod --replSet rs0 --bind_ip localhost --port 27017 --dbpath /path/to/data
+# In another shell, initiate the replica set (only needed once)
+mongosh --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})'
+```
+
+Default `DATABASE_URL` in `.env` will connect to it out of the box.
+
+### 2) Install, sync schema, seed, run
+
+```bash
+# Install dependencies (already done if you ran this before)
 npm install
 
-# Create tables and seed demo data
-npx prisma migrate dev --name init
-npm run db:seed
+# Create collections + indexes and seed demo data
+npm run setup
 
 # Start the dev server
 npm run dev
@@ -84,25 +93,24 @@ npm run dev
 
 Open http://localhost:3000
 
-### Useful DB scripts
+### Useful scripts
 
-| Command                     | What it does                                            |
-| --------------------------- | ------------------------------------------------------- |
-| `npm run db:migrate`        | Create / apply migrations in dev                        |
-| `npm run db:push`           | Sync schema without migrations (quick prototyping)      |
-| `npm run db:seed`           | Insert demo data                                        |
-| `npm run db:reset`          | Drop & recreate DB, apply migrations, re-seed           |
-| `npm run db:studio`         | Open Prisma Studio (visual DB browser)                  |
+| Command             | What it does                                       |
+| ------------------- | -------------------------------------------------- |
+| `npm run db:push`   | Sync Prisma schema → MongoDB collections & indexes |
+| `npm run db:seed`   | Insert / reset demo data                           |
+| `npm run db:studio` | Open Prisma Studio (visual DB browser)             |
+| `npm run setup`     | `db:push` then `db:seed` in one shot               |
 
 ## Demo Accounts (seeded)
 
-| Role        | Email                     | Password    |
-| ----------- | ------------------------- | ----------- |
-| Admin       | admin@bizztob.com         | admin123    |
-| Distributor | distributor@bizztob.com   | dist123     |
-| Distributor | distributor2@bizztob.com  | dist123     |
-| Retailer    | retailer@bizztob.com      | retail123   |
-| Retailer    | retailer2@bizztob.com     | retail123   |
+| Role        | Email                     | Password  |
+| ----------- | ------------------------- | --------- |
+| Admin       | admin@bizztob.com         | admin123  |
+| Distributor | distributor@bizztob.com   | dist123   |
+| Distributor | distributor2@bizztob.com  | dist123   |
+| Retailer    | retailer@bizztob.com      | retail123 |
+| Retailer    | retailer2@bizztob.com     | retail123 |
 
 Or use the "Admin / Distributor / Retailer" quick-fill buttons on the sign-in page.
 
@@ -110,24 +118,27 @@ Or use the "Admin / Distributor / Retailer" quick-fill buttons on the sign-in pa
 
 ```
 prisma/
-  schema.prisma      # DB schema (SQLite)
-  seed.ts            # Demo seed (users, products, orders, ledger)
+  schema.prisma       # Prisma schema (MongoDB provider, native enums, ObjectId ids)
+  seed.ts             # Demo seed (users, products, orders, ledger)
 src/
   app/
-    page.tsx         # Landing page
-    login/, signup/  # Auth pages
-    retailer/        # Retailer app (catalog, orders, ledger, assistant)
-    distributor/     # Distributor console
-    admin/           # Admin console
-    api/             # Route handlers (auth, orders, products, ledger, assistant)
-  components/        # Shared UI (DashboardShell, Logo, StatCard)
-  lib/               # db.ts (Prisma), auth.ts, utils.ts
-  middleware.ts      # Route protection by role
+    page.tsx          # Landing page
+    login/, signup/   # Auth pages (gradient-border card + illustration)
+    retailer/
+      (dashboard)/    # Sidebar layout: dashboard, orders, ledger, payment, messages
+      (market)/       # Top-nav layout: market, cart
+    distributor/      # Sidebar console: dashboard, orders, products, inventory,
+                      # connections, team, payment, ledger, settings
+    admin/            # Admin console
+    api/              # Route handlers (auth, orders, products, ledger)
+  components/         # DashboardShell, MarketTopNav, Logo, ProgressRing, DeliveryIllustration
+  lib/                # db.ts (Prisma), auth.ts, utils.ts, cart.ts
+  middleware.ts       # Route protection by role
 ```
 
 ## Roadmap (AI Features)
 
-Placeholder logic and UI is wired up. Swap the rules-based endpoints for a real LLM later.
+Placeholder logic and UI hooks are ready. Swap for a real LLM later.
 
 - Smart reorder suggestions (based on retailer order history)
 - Demand forecasting for distributors
@@ -136,6 +147,7 @@ Placeholder logic and UI is wired up. Swap the rules-based endpoints for a real 
 
 ## Notes
 
-- All prices are in PKR (Rs). Change `formatCurrency` in `src/lib/utils.ts` to switch currency.
+- All prices are in PKR (`Rs. 12,000`). Change `formatCurrency` in `src/lib/utils.ts` to switch currency.
 - Change `JWT_SECRET` in `.env` before production.
-- The default DB URL points at the Docker Postgres in `docker-compose.yml`. Change it in `.env` to point at your own Postgres.
+- MongoDB replica set is required (single-node is fine for local dev). The provided `docker-compose.yml` handles this automatically.
+- If you switch to MongoDB Atlas, update `DATABASE_URL` and re-run `npm run setup`.

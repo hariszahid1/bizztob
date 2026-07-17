@@ -1,16 +1,16 @@
 import Link from "next/link";
 
-export function Logo({ compact = false }: { compact?: boolean }) {
+export function Logo({
+  size = "md",
+  href = "/",
+}: {
+  size?: "md" | "lg";
+  href?: string;
+}) {
+  const cls = size === "lg" ? "text-3xl" : "text-2xl";
   return (
-    <Link href="/" className="flex items-center gap-2 group">
-      <div className="h-8 w-8 rounded-lg bg-brand-600 grid place-items-center text-white font-bold shadow-sm group-hover:bg-brand-700 transition">
-        B
-      </div>
-      {!compact && (
-        <span className="text-lg font-semibold tracking-tight text-slate-900">
-          Bizztob
-        </span>
-      )}
+    <Link href={href} className={`${cls} font-extrabold tracking-tight text-slate-900`}>
+      Bizztob
     </Link>
   );
 }

@@ -9,26 +9,31 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Bizztob brand — blue leaning towards purple gradient
         brand: {
-          50: "#eef4ff",
-          100: "#dbe6ff",
-          200: "#bfd1ff",
-          300: "#94b1ff",
-          400: "#6688ff",
-          500: "#4361ee",
-          600: "#3244d1",
-          700: "#2836a8",
-          800: "#232f85",
-          900: "#212c69",
-          950: "#141a3d",
+          50: "#eff0ff",
+          100: "#e2e3ff",
+          200: "#c9caff",
+          300: "#a5a5fe",
+          400: "#807efc",
+          500: "#4a45fe", // primary blue
+          600: "#3f39ee",
+          700: "#332dcf",
+          800: "#2b28a4",
+          900: "#252382",
+          950: "#171555",
         },
-        accent: {
-          500: "#22c55e",
-          600: "#16a34a",
+        violet: {
+          500: "#7d33f9",
+          600: "#6f22ec",
+          700: "#5e17c9",
         },
+        canvas: "#f5f5fb", // body background
+        surface: "#ffffff",
       },
       fontFamily: {
         sans: [
+          "Poppins",
           "ui-sans-serif",
           "system-ui",
           "-apple-system",
@@ -39,12 +44,18 @@ const config: Config = {
         ],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.10)",
+        card: "0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.06)",
         soft: "0 4px 24px rgba(16, 24, 40, 0.06)",
+        pill: "0 6px 16px rgba(74, 69, 254, 0.35)",
       },
       backgroundImage: {
-        "grid-slate":
-          "linear-gradient(to right, rgba(148,163,184,.12) 1px, transparent 1px), linear-gradient(to bottom, rgba(148,163,184,.12) 1px, transparent 1px)",
+        "brand-gradient":
+          "linear-gradient(90deg, #4A45FE 0%, #7D33F9 100%)",
+        "brand-gradient-r":
+          "linear-gradient(90deg, #7D33F9 0%, #4A45FE 100%)",
+      },
+      borderRadius: {
+        "2xl": "1rem",
       },
     },
   },

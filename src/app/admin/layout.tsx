@@ -30,7 +30,7 @@ export default async function AdminLayout({
     <DashboardShell
       user={{ name: user.name, email: user.email, role: "Admin" }}
       navItems={navItems}
-      brandLabel="Admin Console"
+      roleLabel="Admin"
     >
       {children}
     </DashboardShell>

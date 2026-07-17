@@ -51,26 +51,31 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
   return (
     <form onSubmit={onSubmit} className="space-y-4">
       <div>
-        <label className="label">Email</label>
+        <label className="label">Username:</label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
           className="input"
-          placeholder="you@example.com"
+          placeholder="Enter username or email"
         />
       </div>
       <div>
-        <label className="label">Password</label>
+        <label className="label">Password:</label>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
           className="input"
-          placeholder="••••••••"
+          placeholder="password"
         />
+      </div>
+      <div className="text-sm">
+        <a href="#" className="text-slate-400 hover:text-slate-600">
+          Forgot password?
+        </a>
       </div>
       {error && (
         <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
@@ -79,31 +84,31 @@ export function LoginForm({ nextUrl }: { nextUrl?: string }) {
       )}
       <button
         type="submit"
-        className="btn-primary w-full justify-center"
+        className="btn-primary w-full justify-center h-11 rounded-md"
         disabled={loading}
       >
-        {loading ? "Signing in..." : "Sign in"}
+        {loading ? "Signing in..." : "Login"}
       </button>
 
-      <div className="grid grid-cols-3 gap-2 pt-2">
+      <div className="grid grid-cols-3 gap-2 pt-1">
         <button
           type="button"
           onClick={() => useDemo("admin")}
-          className="btn-secondary text-xs"
+          className="btn-secondary text-xs h-9 px-2"
         >
           Admin
         </button>
         <button
           type="button"
           onClick={() => useDemo("distributor")}
-          className="btn-secondary text-xs"
+          className="btn-secondary text-xs h-9 px-2"
         >
           Distributor
         </button>
         <button
           type="button"
           onClick={() => useDemo("retailer")}
-          className="btn-secondary text-xs"
+          className="btn-secondary text-xs h-9 px-2"
         >
           Retailer
         </button>

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
-import { CatalogView } from "./CatalogView";
+import { MarketView } from "./MarketView";
 
-export default async function CatalogPage() {
+export default async function MarketPage() {
   const distributors = await prisma.distributor.findMany({
     include: {
       products: {
@@ -12,7 +12,7 @@ export default async function CatalogPage() {
     orderBy: { businessName: "asc" },
   });
 
-  const flat = distributors.flatMap((d) =>
+  const products = distributors.flatMap((d) =>
     d.products.map((p) => ({
       id: p.id,
       name: p.name,
@@ -26,5 +26,5 @@ export default async function CatalogPage() {
     }))
   );
 
-  return <CatalogView products={flat} distributors={distributors.map((d) => ({ id: d.id, name: d.businessName }))} />;
+  return <MarketView products={products} />;
 }

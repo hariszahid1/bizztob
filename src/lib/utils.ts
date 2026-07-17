@@ -5,11 +5,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(n: number) {
-  return new Intl.NumberFormat("en-PK", {
-    style: "currency",
-    currency: "PKR",
+  const value = new Intl.NumberFormat("en-PK", {
     maximumFractionDigits: 0,
   }).format(n || 0);
+  return `Rs. ${value}`;
 }
 
 export function formatDate(d: Date | string) {
@@ -35,17 +34,34 @@ export function formatDateTime(d: Date | string) {
 export function orderStatusStyle(status: string): string {
   switch (status) {
     case "PENDING":
-      return "badge-amber";
+      return "status-amber";
     case "CONFIRMED":
-      return "badge-blue";
+      return "status-blue";
     case "DISPATCHED":
-      return "badge-blue";
+      return "status-blue";
     case "DELIVERED":
-      return "badge-green";
+      return "status-green";
     case "CANCELLED":
-      return "badge-red";
+      return "status-red";
     default:
-      return "badge-slate";
+      return "status-slate";
+  }
+}
+
+export function orderStatusLabel(status: string): string {
+  switch (status) {
+    case "PENDING":
+      return "In Review";
+    case "CONFIRMED":
+      return "Accepted";
+    case "DISPATCHED":
+      return "Dispatched";
+    case "DELIVERED":
+      return "Delivered";
+    case "CANCELLED":
+      return "Rejected";
+    default:
+      return status;
   }
 }
 

@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/db";
-import { StatCard } from "@/components/StatCard";
-import { formatCurrency, formatDate, orderStatusStyle } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 import { Package, Store, Truck, Users } from "lucide-react";
 
 export default async function AdminDashboard() {
@@ -10,7 +9,6 @@ export default async function AdminDashboard() {
     products,
     orders,
     totalRevenue,
-    recentOrders,
   ] = await Promise.all([
     prisma.distributor.count(),
     prisma.retailer.count(),
@@ -20,93 +18,46 @@ export default async function AdminDashboard() {
       _sum: { totalAmount: true },
       where: { status: { in: ["DELIVERED", "DISPATCHED"] } },
     }),
-    prisma.order.findMany({
-      include: { retailer: true, distributor: true },
-      orderBy: { createdAt: "desc" },
-      take: 8,
-    }),
   ]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Overview</h2>
-        <p className="text-slate-600 mt-1">
-          Platform-wide metrics and activity.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Distributors"
-          value={distributors}
-          icon={<Truck className="h-5 w-5" />}
-          tone="brand"
-        />
-        <StatCard
-          label="Retailers"
-          value={retailers}
-          icon={<Store className="h-5 w-5" />}
-          tone="green"
-        />
-        <StatCard
-          label="Products"
-          value={products}
-          icon={<Package className="h-5 w-5" />}
-          tone="slate"
-        />
-        <StatCard
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
+        <BigStat label="Distributors" value={distributors.toString()} icon={<Truck className="h-5 w-5" />} />
+        <BigStat label="Retailers" value={retailers.toString()} icon={<Store className="h-5 w-5" />} />
+        <BigStat label="Products" value={products.toString()} icon={<Package className="h-5 w-5" />} />
+        <BigStat
           label="Total GMV"
           value={formatCurrency(totalRevenue._sum.totalAmount || 0)}
           icon={<Users className="h-5 w-5" />}
-          tone="amber"
-          hint={`${orders} orders total`}
+          hint={`${orders} orders`}
         />
       </div>
+    </div>
+  );
+}
 
-      <div className="card overflow-hidden">
-        <div className="p-5 border-b border-slate-100">
-          <h3 className="font-semibold">Recent platform orders</h3>
+function BigStat({
+  label,
+  value,
+  icon,
+  hint,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  hint?: string;
+}) {
+  return (
+    <div className="card p-6">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-lg bg-brand-100 text-brand-600 grid place-items-center">
+          {icon}
         </div>
-        {recentOrders.length === 0 ? (
-          <div className="p-10 text-center text-slate-500">
-            No orders yet on the platform.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="text-left text-slate-500 bg-slate-50">
-                <tr>
-                  <th className="px-5 py-3">Order</th>
-                  <th className="px-5 py-3">Retailer</th>
-                  <th className="px-5 py-3">Distributor</th>
-                  <th className="px-5 py-3">Date</th>
-                  <th className="px-5 py-3">Total</th>
-                  <th className="px-5 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {recentOrders.map((o) => (
-                  <tr key={o.id}>
-                    <td className="px-5 py-3 font-medium">{o.code}</td>
-                    <td className="px-5 py-3">{o.retailer.shopName}</td>
-                    <td className="px-5 py-3">{o.distributor.businessName}</td>
-                    <td className="px-5 py-3">{formatDate(o.createdAt)}</td>
-                    <td className="px-5 py-3">
-                      {formatCurrency(o.totalAmount)}
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={orderStatusStyle(o.status)}>
-                        {o.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <p className="font-semibold text-slate-900">{label}</p>
       </div>
+      <p className="text-3xl font-extrabold mt-3">{value}</p>
+      {hint && <p className="text-xs text-slate-500 mt-1">{hint}</p>}
     </div>
   );
 }

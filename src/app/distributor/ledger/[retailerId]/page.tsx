@@ -7,10 +7,10 @@ import { ArrowLeft } from "lucide-react";
 import { RecordPayment } from "./RecordPayment";
 
 const typeLabels: Record<string, { label: string; cls: string }> = {
-  INVOICE: { label: "Invoice", cls: "badge-amber" },
-  PAYMENT: { label: "Payment", cls: "badge-green" },
-  CREDIT_NOTE: { label: "Credit", cls: "badge-blue" },
-  DEBIT_NOTE: { label: "Debit", cls: "badge-red" },
+  INVOICE: { label: "Invoice", cls: "status-amber" },
+  PAYMENT: { label: "Payment", cls: "status-green" },
+  CREDIT_NOTE: { label: "Credit", cls: "status-blue" },
+  DEBIT_NOTE: { label: "Debit", cls: "status-red" },
 };
 
 export default async function RetailerLedgerDetail({
@@ -82,7 +82,7 @@ export default async function RetailerLedgerDetail({
                   <tr key={e.id}>
                     <td className="px-5 py-3">{formatDateTime(e.createdAt)}</td>
                     <td className="px-5 py-3">
-                      <span className={typeLabels[e.type]?.cls || "badge-slate"}>
+                      <span className={typeLabels[e.type]?.cls || "status-slate"}>
                         {typeLabels[e.type]?.label || e.type}
                       </span>
                     </td>

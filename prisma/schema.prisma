@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -36,7 +36,7 @@ enum DeliveryStatus {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
   email        String   @unique
   passwordHash String
   name         String
@@ -50,8 +50,8 @@ model User {
 }
 
 model Distributor {
-  id           String   @id @default(cuid())
-  userId       String   @unique
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @unique @db.ObjectId
   businessName String
   address      String?
   city         String?
@@ -66,8 +66,8 @@ model Distributor {
 }
 
 model Retailer {
-  id        String   @id @default(cuid())
-  userId    String   @unique
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @unique @db.ObjectId
   shopName  String
   address   String?
   city      String?
@@ -79,8 +79,8 @@ model Retailer {
 }
 
 model Product {
-  id            String   @id @default(cuid())
-  distributorId String
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  distributorId String   @db.ObjectId
   name          String
   sku           String?
   category      String?
@@ -99,10 +99,10 @@ model Product {
 }
 
 model Order {
-  id            String      @id @default(cuid())
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
   code          String      @unique
-  retailerId    String
-  distributorId String
+  retailerId    String      @db.ObjectId
+  distributorId String      @db.ObjectId
   status        OrderStatus @default(PENDING)
   totalAmount   Float       @default(0)
   notes         String?
@@ -120,9 +120,9 @@ model Order {
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String @db.ObjectId
+  productId String @db.ObjectId
   name      String
   quantity  Int
   unitPrice Float
@@ -135,9 +135,9 @@ model OrderItem {
 }
 
 model Delivery {
-  id            String         @id @default(cuid())
-  orderId       String         @unique
-  distributorId String
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String         @unique @db.ObjectId
+  distributorId String         @db.ObjectId
   address       String
   driverName    String?
   vehicleNo     String?
@@ -151,10 +151,10 @@ model Delivery {
 }
 
 model LedgerEntry {
-  id            String     @id @default(cuid())
-  retailerId    String
-  distributorId String
-  orderId       String?    @unique
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  retailerId    String     @db.ObjectId
+  distributorId String     @db.ObjectId
+  orderId       String?    @unique @db.ObjectId
   type          LedgerType
   amount        Float
   balance       Float

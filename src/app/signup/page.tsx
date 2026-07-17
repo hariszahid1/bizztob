@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { MarketTopNav } from "@/components/MarketTopNav";
 import { SignupForm } from "./SignupForm";
+import { User as UserIcon } from "lucide-react";
 
 export default function SignupPage({
   searchParams,
@@ -11,45 +12,33 @@ export default function SignupPage({
     searchParams.role === "distributor" ? "DISTRIBUTOR" : "RETAILER";
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-white">
-      <div className="hidden lg:flex flex-col justify-between p-10 hero-bg">
-        <Logo />
-        <div>
-          <h2 className="text-3xl font-semibold tracking-tight text-slate-900 max-w-md">
-            Join the Bizztob network today.
-          </h2>
-          <p className="mt-3 text-slate-600 max-w-md">
-            Retailers get an easy ordering app. Distributors get a modern
-            console.
-          </p>
-        </div>
-        <div />
-      </div>
+    <div className="min-h-screen bg-canvas">
+      <MarketTopNav showAuthLinks />
 
-      <div className="flex items-center justify-center p-6 lg:p-10">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-6">
-            <Logo />
-          </div>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Create your account
+      <main className="max-w-[1200px] mx-auto px-4 lg:px-10 py-8 lg:py-14">
+        <div className="grad-border p-8 lg:p-10 bg-white shadow-soft max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-center text-slate-900">
+            Register
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
-            Start managing orders in minutes.
-          </p>
-
+          <div className="mt-4 flex justify-center">
+            <div className="h-16 w-16 rounded-full bg-brand-100 grid place-items-center border-2 border-brand-200">
+              <UserIcon className="h-8 w-8 text-brand-600" />
+            </div>
+          </div>
           <div className="mt-6">
             <SignupForm initialRole={initialRole} />
           </div>
-
-          <div className="mt-6 text-sm text-slate-600">
-            Already have an account?{" "}
-            <Link href="/login" className="text-brand-700 font-medium">
-              Sign in
+          <div className="mt-6 text-sm text-slate-500 text-center">
+            Already have account?{" "}
+            <Link
+              href="/login"
+              className="text-brand-600 font-semibold hover:underline"
+            >
+              Login
             </Link>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
