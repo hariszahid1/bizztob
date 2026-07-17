@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -28,12 +28,19 @@ enum LedgerType {
   DEBIT_NOTE
 }
 
+enum DeliveryStatus {
+  SCHEDULED
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
   name         String
-  role         String
+  role         Role
   phone        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -43,32 +50,32 @@ model User {
 }
 
 model Distributor {
-  id          String   @id @default(cuid())
-  userId      String   @unique
+  id           String   @id @default(cuid())
+  userId       String   @unique
   businessName String
-  address     String?
-  city        String?
-  logoUrl     String?
-  createdAt   DateTime @default(now())
+  address      String?
+  city         String?
+  logoUrl      String?
+  createdAt    DateTime @default(now())
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  products  Product[]
-  orders    Order[]
-  ledgers   LedgerEntry[]
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products   Product[]
+  orders     Order[]
+  ledgers    LedgerEntry[]
   deliveries Delivery[]
 }
 
 model Retailer {
-  id           String   @id @default(cuid())
-  userId       String   @unique
-  shopName     String
-  address      String?
-  city         String?
-  createdAt    DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  shopName  String
+  address   String?
+  city      String?
+  createdAt DateTime @default(now())
 
-  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  orders   Order[]
-  ledgers  LedgerEntry[]
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders  Order[]
+  ledgers LedgerEntry[]
 }
 
 model Product {
@@ -92,18 +99,18 @@ model Product {
 }
 
 model Order {
-  id            String   @id @default(cuid())
-  code          String   @unique
+  id            String      @id @default(cuid())
+  code          String      @unique
   retailerId    String
   distributorId String
-  status        String   @default("PENDING")
-  totalAmount   Float    @default(0)
+  status        OrderStatus @default(PENDING)
+  totalAmount   Float       @default(0)
   notes         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  retailer    Retailer    @relation(fields: [retailerId], references: [id], onDelete: Cascade)
-  distributor Distributor @relation(fields: [distributorId], references: [id], onDelete: Cascade)
+  retailer    Retailer     @relation(fields: [retailerId], references: [id], onDelete: Cascade)
+  distributor Distributor  @relation(fields: [distributorId], references: [id], onDelete: Cascade)
   items       OrderItem[]
   delivery    Delivery?
   ledger      LedgerEntry?
@@ -128,31 +135,31 @@ model OrderItem {
 }
 
 model Delivery {
-  id            String   @id @default(cuid())
-  orderId       String   @unique
+  id            String         @id @default(cuid())
+  orderId       String         @unique
   distributorId String
   address       String
   driverName    String?
   vehicleNo     String?
   scheduledFor  DateTime?
   deliveredAt   DateTime?
-  status        String   @default("SCHEDULED")
-  createdAt     DateTime @default(now())
+  status        DeliveryStatus @default(SCHEDULED)
+  createdAt     DateTime       @default(now())
 
   order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
   distributor Distributor @relation(fields: [distributorId], references: [id], onDelete: Cascade)
 }
 
 model LedgerEntry {
-  id            String   @id @default(cuid())
+  id            String     @id @default(cuid())
   retailerId    String
   distributorId String
-  orderId       String?  @unique
-  type          String
+  orderId       String?    @unique
+  type          LedgerType
   amount        Float
   balance       Float
   note          String?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime   @default(now())
 
   retailer    Retailer    @relation(fields: [retailerId], references: [id], onDelete: Cascade)
   distributor Distributor @relation(fields: [distributorId], references: [id], onDelete: Cascade)
